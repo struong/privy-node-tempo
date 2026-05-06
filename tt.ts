@@ -2,9 +2,8 @@
  * Tempo Type 118 (TIP-118) transaction via the Privy Node SDK.
  *
  * Sends an alphaUSD transfer where gas is paid in a non-native ERC-20 fee token
- * (default: thetaUSD). Uses the SDK's low-level `wallets._rpc()` because the
- * typed `sendTransaction` wrapper only models standard EVM types (0, 1, 2, 4),
- * while Tempo's type 118 requires `fee_token` + `calls[]`.
+ * (default: thetaUSD). As of @privy-io/node v0.17.0 the SDK's `sendTransaction`
+ * accepts `UnsignedTempoTransaction` directly, so no casts are needed.
  *
  * Run: bun run tt
  */
@@ -59,27 +58,16 @@ async function main() {
   console.log(`  recipient: ${recipient}`);
   console.log(`  amount:    ${amount.toString()} (alphaUSD base units)\n`);
 
-  // Type 118 (TIP-118) transaction shape — fee_token + calls[].
-  // The SDK's typed `params.transaction` only models UnsignedStandardEthereumTransaction
-  // (types 0/1/2/4), but the API accepts UnsignedTempoTransaction (type 118).
-  // Cast the transaction payload through `unknown` to bypass the narrower static type.
-  const tempoTransaction = {
-    chain_id: CHAIN_ID,
-    type: 118,
-    fee_token: feeToken,
-    calls: [
-      {
-        to: ALPHA_USD,
-        data,
-      },
-    ],
-  } as unknown as Parameters<
-    ReturnType<ReturnType<typeof privy.wallets>["ethereum"]>["sendTransaction"]
-  >[1]["params"]["transaction"];
-
   const response = await privy.wallets().ethereum().sendTransaction(walletId, {
     caip2: CAIP2,
-    params: { transaction: tempoTransaction },
+    params: {
+      transaction: {
+        chain_id: CHAIN_ID,
+        type: 118,
+        fee_token: feeToken,
+        calls: [{ to: ALPHA_USD, data }],
+      },
+    },
   });
 
   const hash = response.hash;

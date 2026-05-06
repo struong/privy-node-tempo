@@ -4,6 +4,9 @@
  * Sends BOTH alphaUSD and thetaUSD to the same recipient in a single tx,
  * paying gas in thetaUSD, on `nonce_key=2` (parallel nonce stream).
  *
+ * As of @privy-io/node v0.17.0 the SDK exports `UnsignedTempoTransaction`
+ * and `sendTransaction` accepts it directly — no casts needed.
+ *
  * Run: bun run batch
  */
 
@@ -93,23 +96,19 @@ async function main() {
   console.log(`  call[0]:   alphaUSD.transfer  amount=${alphaAmount}`);
   console.log(`  call[1]:   thetaUSD.transfer  amount=${thetaAmount}\n`);
 
-  // Type 118 (TIP-118): fee_token + calls[] + nonce_key. Cast through `unknown`
-  // because the SDK's typed transaction param only models EVM types 0/1/2/4.
-  const tempoTransaction = {
-    chain_id: CHAIN_ID,
-    type: 118,
-    fee_token: THETA_USD,
-    nonce_key: `0x${nonceKey.toString(16)}`,
-    nonce: `0x${nextNonce.toString(16)}`,
-    gas_limit: `0x${gasLimit.toString(16)}`,
-    calls,
-  } as unknown as Parameters<
-    ReturnType<ReturnType<typeof privy.wallets>["ethereum"]>["sendTransaction"]
-  >[1]["params"]["transaction"];
-
   const response = await privy.wallets().ethereum().sendTransaction(walletId, {
     caip2: CAIP2,
-    params: { transaction: tempoTransaction },
+    params: {
+      transaction: {
+        type: 118,
+        chain_id: CHAIN_ID,
+        fee_token: THETA_USD,
+        nonce_key: `0x${nonceKey.toString(16)}`,
+        nonce: `0x${nextNonce.toString(16)}`,
+        gas_limit: `0x${gasLimit.toString(16)}`,
+        calls,
+      },
+    },
   });
 
   const hash = response.hash;
