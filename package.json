@@ -9,7 +9,7 @@
     "batch": "bun run batch.ts"
   },
   "dependencies": {
-    "@privy-io/node": "latest",
+    "@privy-io/node": "0.17.0",
     "viem": "^2.21.0"
   },
   "devDependencies": {
