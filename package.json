@@ -6,10 +6,12 @@
   "scripts": {
     "send": "bun run send.ts",
     "tt": "bun run tt.ts",
-    "batch": "bun run batch.ts"
+    "batch": "bun run batch.ts",
+    "valid-after": "bun run valid-after.ts",
+    "tt-viem": "bun run tt-viem.ts"
   },
   "dependencies": {
-    "@privy-io/node": "0.17.0",
+    "@privy-io/node": "^0.21.0",
     "viem": "^2.21.0"
   },
   "devDependencies": {
